@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Plus, ChevronDown, ChevronRight, ArrowRight, ArrowLeft } from "lucide-react";
+import { Plus, ChevronDown, ChevronRight, ArrowRight, ArrowLeft, Pencil, Trash2 } from "lucide-react";
 import {
   useOrders, useOrderMutations, useParties,
   useSubParties, useProducts, useColors,
@@ -93,7 +93,6 @@ function OrderHeaderForm({ header, parties, subParties, onChange }) {
     onChange({
       ...header,
       subPartyId,
-      // Sub-party values override party defaults when present
       transport: sub?.transport || header.transport,
       marka:     sub?.marka     || header.marka,
       station:   sub?.station   || header.station,
@@ -103,14 +102,9 @@ function OrderHeaderForm({ header, parties, subParties, onChange }) {
   return (
     <div className="space-y-4">
       <div className="grid grid-cols-2 gap-3">
-
-        {/* Party */}
         <div>
           <label className="text-sm font-medium text-zinc-700">Party <span className="text-red-400">*</span></label>
-          <Select
-            value={header.partyId}
-            onValueChange={v => handlePartyChange(v, parties)}
-          >
+          <Select value={header.partyId} onValueChange={v => handlePartyChange(v, parties)}>
             <SelectTrigger className="mt-1">
               <SelectValue placeholder="Select party" />
             </SelectTrigger>
@@ -121,8 +115,6 @@ function OrderHeaderForm({ header, parties, subParties, onChange }) {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Sub-Party */}
         <div>
           <label className="text-sm font-medium text-zinc-700">Sub-Party</label>
           <Select
@@ -142,32 +134,25 @@ function OrderHeaderForm({ header, parties, subParties, onChange }) {
         </div>
       </div>
 
-      {/* Auto-fetched + editable fields */}
       <div className="grid grid-cols-3 gap-3">
         <div>
           <label className="text-sm font-medium text-zinc-700">Transport</label>
-          <Input
-            className="mt-1" placeholder="e.g. DTDC"
+          <Input className="mt-1" placeholder="e.g. DTDC"
             value={header.transport}
-            onChange={e => onChange({ ...header, transport: e.target.value })}
-          />
+            onChange={e => onChange({ ...header, transport: e.target.value })} />
         </div>
         <div>
           <label className="text-sm font-medium text-zinc-700">Marka</label>
-          <Input
-            className="mt-1" placeholder="e.g. RF-001"
+          <Input className="mt-1" placeholder="e.g. RF-001"
             value={header.marka}
-            onChange={e => onChange({ ...header, marka: e.target.value })}
-          />
+            onChange={e => onChange({ ...header, marka: e.target.value })} />
         </div>
         <div>
           <label className="text-sm font-medium text-zinc-700">Station</label>
-          <Input
-            className="mt-1" placeholder="e.g. Delhi"
+          <Input className="mt-1" placeholder="e.g. Delhi"
             value={header.station}
             onChange={e => onChange({ ...header, station: e.target.value })}
-            disabled  // station is informational only; remove disabled if editable
-          />
+            disabled />
         </div>
       </div>
 
@@ -185,13 +170,6 @@ function OrderHeaderForm({ header, parties, subParties, onChange }) {
 function OrderItemForm({ item, index, colors, products, onUpdate, onRemove }) {
   const product = products.find(p => p.id === item.product_id);
 
-  /**
-   * Resolve colors for the selected product.
-   * Django serializes the M2M field as either:
-   *   product.color  → array of { id, name }  (DRF nested serializer)
-   *   product.colors → same, alternate key
-   * We check both and fall back to all colors when no product is selected.
-   */
   const productColorIds = new Set(
     (product?.color ?? product?.colors ?? []).map(c => c.id)
   );
@@ -213,31 +191,23 @@ function OrderItemForm({ item, index, colors, products, onUpdate, onRemove }) {
   const handleProductChange = (productName) => {
     const p = products.find(pr => pr.name === productName);
     onUpdate(index, "_batch", {
-      product_id: p?.id ?? "",
+      product_id:   p?.id ?? "",
       product_name: productName,
-      size_min:  p?.size_min ?? "",
-      size_max:  p?.size_max ?? "",
-      color_ids: [],
+      size_min:     p?.size_min ?? "",
+      size_max:     p?.size_max ?? "",
+      color_ids:    [],
     });
   };
 
   return (
     <div className="border border-zinc-200 rounded-lg p-4 space-y-3 relative">
-      <button
-        onClick={() => onRemove(index)}
-        className="absolute top-3 right-3 text-zinc-400 hover:text-red-500 text-xs"
-      >
-        ✕
-      </button>
+      <button onClick={() => onRemove(index)}
+        className="absolute top-3 right-3 text-zinc-400 hover:text-red-500 text-xs">✕</button>
 
       <div className="grid grid-cols-2 gap-3">
-        {/* Product */}
         <div>
           <label className="text-xs font-medium text-zinc-600">Product</label>
-          <Select
-            value={item.product_name}
-            onValueChange={handleProductChange}
-          >
+          <Select value={item.product_name} onValueChange={handleProductChange}>
             <SelectTrigger className="mt-1 h-8 text-sm">
               <SelectValue placeholder="Select product" />
             </SelectTrigger>
@@ -248,46 +218,33 @@ function OrderItemForm({ item, index, colors, products, onUpdate, onRemove }) {
             </SelectContent>
           </Select>
         </div>
-
-        {/* Quantity */}
         <div>
           <label className="text-xs font-medium text-zinc-600">Quantity</label>
-          <Input
-            className="mt-1 h-8 text-sm" type="number" placeholder="50"
+          <Input className="mt-1 h-8 text-sm" type="number" placeholder="50"
             value={item.quantity}
-            onChange={e => onUpdate(index, "quantity", e.target.value)}
-          />
+            onChange={e => onUpdate(index, "quantity", e.target.value)} />
         </div>
       </div>
 
       <div className="grid grid-cols-3 gap-3">
-        {/* Min Size */}
         <div>
           <label className="text-xs font-medium text-zinc-600">
             Min Size {product && <span className="text-zinc-400">({product.size_min}+)</span>}
           </label>
-          <Input
-            className="mt-1 h-8 text-sm" type="number"
+          <Input className="mt-1 h-8 text-sm" type="number"
             min={product?.size_min} max={product?.size_max}
             value={item.size_min}
-            onChange={e => onUpdate(index, "size_min", e.target.value)}
-          />
+            onChange={e => onUpdate(index, "size_min", e.target.value)} />
         </div>
-
-        {/* Max Size */}
         <div>
           <label className="text-xs font-medium text-zinc-600">
             Max Size {product && <span className="text-zinc-400">(–{product.size_max})</span>}
           </label>
-          <Input
-            className="mt-1 h-8 text-sm" type="number"
+          <Input className="mt-1 h-8 text-sm" type="number"
             min={product?.size_min} max={product?.size_max}
             value={item.size_max}
-            onChange={e => onUpdate(index, "size_max", e.target.value)}
-          />
+            onChange={e => onUpdate(index, "size_max", e.target.value)} />
         </div>
-
-        {/* Packing */}
         <div>
           <label className="text-xs font-medium text-zinc-600">Packing</label>
           <Select value={item.packing} onValueChange={v => onUpdate(index, "packing", v)}>
@@ -301,21 +258,18 @@ function OrderItemForm({ item, index, colors, products, onUpdate, onRemove }) {
         </div>
       </div>
 
-      {/* Colors */}
       <div>
         <label className="text-xs font-medium text-zinc-600 block mb-1.5">
           Colors {product && <span className="text-zinc-400">(from product)</span>}
         </label>
         <div className="flex flex-wrap gap-1.5">
           {availableColors.map(c => (
-            <button
-              key={c.id} type="button" onClick={() => toggleColor(c.id)}
+            <button key={c.id} type="button" onClick={() => toggleColor(c.id)}
               className={`text-xs px-2.5 py-0.5 rounded-full border capitalize transition-colors
                 ${item.color_ids.includes(c.id)
                   ? "bg-zinc-900 text-white border-zinc-900"
                   : "bg-white text-zinc-600 border-zinc-200 hover:border-zinc-400"
-                }`}
-            >
+                }`}>
               {c.name}
             </button>
           ))}
@@ -332,27 +286,51 @@ function OrderItemsForm({ items, colors, products, onUpdate, onAdd, onRemove }) 
     <div className="space-y-3">
       <div className="flex items-center justify-between">
         <label className="text-sm font-medium text-zinc-700">Order Items</label>
-        <button
-          onClick={onAdd}
-          className="text-xs text-zinc-500 hover:text-zinc-800 flex items-center gap-1"
-        >
+        <button onClick={onAdd}
+          className="text-xs text-zinc-500 hover:text-zinc-800 flex items-center gap-1">
           <Plus size={12} /> Add item
         </button>
       </div>
       {items.map((item, i) => (
-        <OrderItemForm
-          key={i} item={item} index={i}
+        <OrderItemForm key={i} item={item} index={i}
           colors={colors} products={products}
-          onUpdate={onUpdate} onRemove={onRemove}
-        />
+          onUpdate={onUpdate} onRemove={onRemove} />
       ))}
     </div>
   );
 }
 
+// ─── Delete Confirm Dialog ────────────────────────────────────────────────────
+
+/**
+ * Lightweight confirmation dialog before permanently deleting an order.
+ * Kept separate so it can be independently updated without touching order form logic.
+ */
+function DeleteConfirmDialog({ order, onConfirm, onCancel, isDeleting }) {
+  return (
+    <Dialog open={!!order} onOpenChange={onCancel}>
+      <DialogContent className="sm:max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Delete Order #{order?.id}?</DialogTitle>
+        </DialogHeader>
+        <p className="text-sm text-zinc-600 py-2">
+          This will permanently delete the order for <span className="font-medium">{order?.party_name}</span> and
+          all its items. This action cannot be undone.
+        </p>
+        <DialogFooter className="gap-2">
+          <Button variant="outline" onClick={onCancel} disabled={isDeleting}>Cancel</Button>
+          <Button variant="destructive" onClick={onConfirm} disabled={isDeleting}>
+            {isDeleting ? "Deleting..." : "Delete Order"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 // ─── Orders Table ─────────────────────────────────────────────────────────────
 
-function OrdersTable({ orders, isLoading, expanded, onToggleExpand }) {
+function OrdersTable({ orders, isLoading, expanded, onToggleExpand, onEdit, onDelete }) {
   return (
     <div className="bg-white rounded-xl border border-zinc-200 overflow-hidden">
       <Table>
@@ -365,24 +343,22 @@ function OrdersTable({ orders, isLoading, expanded, onToggleExpand }) {
             <TableHead>Transport</TableHead>
             <TableHead>Marka</TableHead>
             <TableHead>Items</TableHead>
+            <TableHead className="w-20" />
           </TableRow>
         </TableHeader>
         <TableBody>
           {isLoading ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-zinc-400 py-10">Loading...</TableCell>
+              <TableCell colSpan={8} className="text-center text-zinc-400 py-10">Loading...</TableCell>
             </TableRow>
           ) : orders.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={7} className="text-center text-zinc-400 py-10">No orders yet.</TableCell>
+              <TableCell colSpan={8} className="text-center text-zinc-400 py-10">No orders yet.</TableCell>
             </TableRow>
           ) : (
             orders.map(order => (
               <>
-                <TableRow
-                  key={order.id} className="cursor-pointer"
-                  onClick={() => onToggleExpand(order.id)}
-                >
+                <TableRow key={order.id} className="cursor-pointer" onClick={() => onToggleExpand(order.id)}>
                   <TableCell>
                     <div className="flex items-center gap-2 font-medium">
                       {expanded[order.id]
@@ -402,15 +378,33 @@ function OrdersTable({ orders, isLoading, expanded, onToggleExpand }) {
                       {order.items?.length ?? 0} items
                     </span>
                   </TableCell>
+
+                  {/* Action buttons — stop propagation so row expand doesn't trigger */}
+                  <TableCell onClick={e => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 justify-end">
+                      <button
+                        onClick={() => onEdit(order)}
+                        className="text-zinc-400 hover:text-zinc-700 transition-colors"
+                        title="Edit order"
+                      >
+                        <Pencil size={14} />
+                      </button>
+                      <button
+                        onClick={() => onDelete(order)}
+                        className="text-zinc-400 hover:text-red-500 transition-colors"
+                        title="Delete order"
+                      >
+                        <Trash2 size={14} />
+                      </button>
+                    </div>
+                  </TableCell>
                 </TableRow>
 
                 {expanded[order.id] && order.items?.map(item => (
                   <TableRow key={item.id} className="bg-zinc-50/50">
                     <TableCell colSpan={2} />
                     <TableCell className="text-sm text-zinc-700">↳ {item.product_name}</TableCell>
-                    <TableCell className="text-sm text-zinc-500">
-                      Size {item.size_min}–{item.size_max}
-                    </TableCell>
+                    <TableCell className="text-sm text-zinc-500">Size {item.size_min}–{item.size_max}</TableCell>
                     <TableCell className="text-sm text-zinc-500">Qty: {item.quantity}</TableCell>
                     <TableCell>
                       <span className={`text-xs px-2 py-0.5 rounded-full ${PACKING_COLORS[item.packing]}`}>
@@ -427,6 +421,7 @@ function OrdersTable({ orders, isLoading, expanded, onToggleExpand }) {
                         ))}
                       </div>
                     </TableCell>
+                    <TableCell />
                   </TableRow>
                 ))}
               </>
@@ -438,30 +433,80 @@ function OrdersTable({ orders, isLoading, expanded, onToggleExpand }) {
   );
 }
 
-// ─── New Order Dialog ─────────────────────────────────────────────────────────
+// ─── Order Form Dialog (shared by Create and Edit) ────────────────────────────
 
 /**
- * Two-step dialog:
- *   Step 1 → Fill Order header (party, sub-party, transport, marka, station)
- *   Step 2 → Add OrderItems; on submit, creates Order first then links items
+ * Two-step dialog used for both creating and editing orders.
+ *
+ * When `editOrder` is provided:
+ *   - Header fields are pre-populated from the existing order
+ *   - Items are pre-populated from order.items (mapped to local EMPTY_ITEM shape)
+ *   - Submit patches the order header via ordersApi.update, then:
+ *       • Deletes removed items (present in original, absent in current)
+ *       • Creates new items (no id yet)
+ *       • Updates existing items that were modified (have an id)
+ *
+ * When `editOrder` is null, behaves exactly as before (create flow).
  */
-function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
-  const { create } = useOrderMutations();
+function OrderFormDialog({ open, onOpenChange, parties, products, colors, editOrder }) {
+  const { create, update, remove } = useOrderMutations();
 
-  const [step, setStep]       = useState(1);
-  const [header, setHeader]   = useState({ ...EMPTY_ORDER_HEADER });
-  const [items, setItems]     = useState([{ ...EMPTY_ITEM }]);
+  const isEditMode = !!editOrder;
+
+  // ── Derive initial state from editOrder when present ─────────────────────
+
+  const buildInitialHeader = (order) => {
+    if (!order) return { ...EMPTY_ORDER_HEADER };
+    return {
+      partyId:    String(order.party),
+      subPartyId: order.sub_party ? String(order.sub_party) : "",
+      transport:  order.transport ?? "",
+      marka:      order.marka     ?? "",
+      station:    "",   // not returned by Orders serializer; filled from party on edit open
+    };
+  };
+
+  /**
+   * Map existing OrderItems (from the API) back into the local EMPTY_ITEM shape
+   * so they render correctly inside OrderItemForm.
+   * Preserves the item `id` so we can PATCH vs POST on submit.
+   */
+  const buildInitialItems = (order) => {
+    if (!order?.items?.length) return [{ ...EMPTY_ITEM }];
+    return order.items.map(item => ({
+      id:           item.id,                   // existing DB id — used to decide PATCH vs POST
+      product_id:   item.product,              // FK int
+      product_name: item.product_name ?? "",   // read-only display field from serializer
+      size_min:     item.size_min,
+      size_max:     item.size_max,
+      quantity:     item.quantity,
+      packing:      item.packing,
+      color_ids:    (item.color ?? []).map(c => c.id),
+    }));
+  };
+
+  const [step, setStep]         = useState(1);
+  const [header, setHeader]     = useState(() => buildInitialHeader(editOrder));
+  const [items, setItems]       = useState(() => buildInitialItems(editOrder));
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const { data: subParties = [] } = useSubParties(header.partyId || null);
+
+  // Re-populate state whenever the dialog opens with a different order
+  // (covers switching from one edit target to another without unmounting)
+  useState(() => {
+    if (open) {
+      setStep(1);
+      setHeader(buildInitialHeader(editOrder));
+      setItems(buildInitialItems(editOrder));
+    }
+  }, [open, editOrder]);
 
   // ── Item helpers ──────────────────────────────────────────────────────────
 
   const updateItem = (index, key, value) =>
     setItems(prev => prev.map((item, i) => {
       if (i !== index) return item;
-      // "_batch" allows atomically patching multiple fields at once,
-      // preventing stale-closure bugs from sequential single-key updates.
       if (key === "_batch") return { ...item, ...value };
       return { ...item, [key]: value };
     }));
@@ -473,7 +518,6 @@ function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
 
   const handleClose = () => {
     onOpenChange(false);
-    // Reset after close animation
     setTimeout(() => {
       setStep(1);
       setHeader({ ...EMPTY_ORDER_HEADER });
@@ -481,39 +525,82 @@ function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
     }, 300);
   };
 
-  // ── Step 1 → Step 2 ───────────────────────────────────────────────────────
+  // ── Submit: create path ───────────────────────────────────────────────────
 
-  const handleProceedToItems = () => setStep(2);
-  const handleBackToHeader   = () => setStep(1);
+  const handleCreate = async () => {
+    const orderRes = await ordersApi.create({
+      party:     Number(header.partyId),
+      sub_party: header.subPartyId ? Number(header.subPartyId) : null,
+      transport: header.transport,
+      marka:     header.marka,
+    });
+    const orderId = orderRes.data.id;
 
-  // ── Final submit: Order first, then OrderItems ────────────────────────────
+    for (const item of items) {
+      await orderItemsApi.create({
+        order:    orderId,
+        product:  item.product_id,
+        size_min: Number(item.size_min),
+        size_max: Number(item.size_max),
+        quantity: Number(item.quantity),
+        packing:  item.packing,
+        color_id: item.color_ids,
+      });
+    }
+    create.mutate();
+  };
+
+  // ── Submit: edit path ─────────────────────────────────────────────────────
+
+  const handleUpdate = async () => {
+    // 1. Patch the Order header fields
+    await ordersApi.update(editOrder.id, {
+      party:     Number(header.partyId),
+      sub_party: header.subPartyId ? Number(header.subPartyId) : null,
+      transport: header.transport,
+      marka:     header.marka,
+    });
+
+    const originalItemIds = new Set((editOrder.items ?? []).map(i => i.id));
+    const currentItemIds  = new Set(items.filter(i => i.id).map(i => i.id));
+
+    // 2. Delete items that were removed in the form
+    const deletedIds = [...originalItemIds].filter(id => !currentItemIds.has(id));
+    for (const id of deletedIds) {
+      await orderItemsApi.delete(id);
+    }
+
+    // 3. Update existing items / create new ones
+    for (const item of items) {
+      const payload = {
+        order:    editOrder.id,
+        product:  item.product_id,
+        size_min: Number(item.size_min),
+        size_max: Number(item.size_max),
+        quantity: Number(item.quantity),
+        packing:  item.packing,
+        color_id: item.color_ids,
+      };
+
+      if (item.id) {
+        await orderItemsApi.update(item.id, payload);   // existing → PATCH
+      } else {
+        await orderItemsApi.create(payload);             // new → POST
+      }
+    }
+    update.mutate();
+  };
+
+  // ── Unified submit handler ────────────────────────────────────────────────
 
   const handleSubmit = async () => {
     setIsSubmitting(true);
     try {
-      // 1. Create the Order record
-      const orderRes = await ordersApi.create({
-        party:     Number(header.partyId),
-        sub_party: header.subPartyId ? Number(header.subPartyId) : null,
-        transport: header.transport,
-        marka:     header.marka,
-      });
-      const orderId = orderRes.data.id;
-
-      // 2. Create each OrderItem linked to the order
-      for (const item of items) {
-        await orderItemsApi.create({
-          order:    orderId,
-          product:  item.product_id,
-          size_min: Number(item.size_min),
-          size_max: Number(item.size_max),
-          quantity: Number(item.quantity),
-          packing:  item.packing,
-          color_id: item.color_ids,
-        });
+      if (isEditMode) {
+        await handleUpdate();
+      } else {
+        await handleCreate();
       }
-
-      create.mutate();   // invalidate/refetch orders list
       handleClose();
     } finally {
       setIsSubmitting(false);
@@ -527,7 +614,7 @@ function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>New Order</DialogTitle>
+          <DialogTitle>{isEditMode ? `Edit Order #${editOrder.id}` : "New Order"}</DialogTitle>
         </DialogHeader>
 
         <StepIndicator currentStep={step} />
@@ -556,24 +643,20 @@ function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
           {step === 1 ? (
             <>
               <Button variant="outline" onClick={handleClose}>Cancel</Button>
-              <Button
-                onClick={handleProceedToItems}
-                disabled={!isStep1Valid}
-                className="gap-2"
-              >
+              <Button onClick={() => setStep(2)} disabled={!isStep1Valid} className="gap-2">
                 Next: Add Items <ArrowRight size={14} />
               </Button>
             </>
           ) : (
             <>
-              <Button variant="outline" onClick={handleBackToHeader} className="gap-2">
+              <Button variant="outline" onClick={() => setStep(1)} className="gap-2">
                 <ArrowLeft size={14} /> Back
               </Button>
-              <Button
-                onClick={handleSubmit}
-                disabled={!isStep2Valid || isSubmitting}
-              >
-                {isSubmitting ? "Placing..." : "Place Order"}
+              <Button onClick={handleSubmit} disabled={!isStep2Valid || isSubmitting}>
+                {isSubmitting
+                  ? (isEditMode ? "Saving..." : "Placing...")
+                  : (isEditMode ? "Save Changes" : "Place Order")
+                }
               </Button>
             </>
           )}
@@ -587,14 +670,45 @@ function NewOrderDialog({ open, onOpenChange, parties, products, colors }) {
 
 export default function OrdersPage() {
   const { data: orders = [], isLoading } = useOrders();
+  const { remove }                       = useOrderMutations();
   const { data: parties = [] }           = useParties();
   const { data: products = [] }          = useProducts();
   const { data: colors = [] }            = useColors();
 
-  const [open, setOpen]         = useState(false);
-  const [expanded, setExpanded] = useState({});
+  const [expanded, setExpanded]         = useState({});
+  const [formOpen, setFormOpen]         = useState(false);
+  const [editOrder, setEditOrder]       = useState(null);   // null = create, object = edit
+  const [deleteTarget, setDeleteTarget] = useState(null);   // order to confirm-delete
+  const [isDeleting, setIsDeleting]     = useState(false);
 
   const toggleExpand = (id) => setExpanded(e => ({ ...e, [id]: !e[id] }));
+
+  // ── Open create dialog ────────────────────────────────────────────────────
+
+  const handleOpenCreate = () => {
+    setEditOrder(null);
+    setFormOpen(true);
+  };
+
+  // ── Open edit dialog pre-populated with existing order ────────────────────
+
+  const handleOpenEdit = (order) => {
+    setEditOrder(order);
+    setFormOpen(true);
+  };
+
+  // ── Delete flow ───────────────────────────────────────────────────────────
+
+  const handleDeleteConfirm = async () => {
+    setIsDeleting(true);
+    try {
+      await ordersApi.remove(deleteTarget.id);
+      remove.mutate();
+      setDeleteTarget(null);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   return (
     <div className="p-8">
@@ -602,7 +716,7 @@ export default function OrdersPage() {
         title="Orders"
         description="Track all shoe orders"
         action={
-          <Button onClick={() => setOpen(true)} size="sm" className="gap-2">
+          <Button onClick={handleOpenCreate} size="sm" className="gap-2">
             <Plus size={14} /> New Order
           </Button>
         }
@@ -613,14 +727,24 @@ export default function OrdersPage() {
         isLoading={isLoading}
         expanded={expanded}
         onToggleExpand={toggleExpand}
+        onEdit={handleOpenEdit}
+        onDelete={setDeleteTarget}
       />
 
-      <NewOrderDialog
-        open={open}
-        onOpenChange={setOpen}
+      <OrderFormDialog
+        open={formOpen}
+        onOpenChange={setFormOpen}
         parties={parties}
         products={products}
         colors={colors}
+        editOrder={editOrder}
+      />
+
+      <DeleteConfirmDialog
+        order={deleteTarget}
+        onConfirm={handleDeleteConfirm}
+        onCancel={() => setDeleteTarget(null)}
+        isDeleting={isDeleting}
       />
     </div>
   );
